@@ -34,6 +34,13 @@ import com.marklynch.steamdeck.data.image.disk.ImageData
 import com.marklynch.steamdeck.data.image.disk.ImageRepository
 import com.marklynch.steamdeck.data.image.disk.ImageRepositoryImpl
 import com.marklynch.steamdeck.data.image.model.ImageViewModel
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.*
+import androidx.compose.ui.Alignment
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 val photos:Int = 20
 val gridSize:Int = 128
@@ -49,19 +56,57 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val imageRepository = ImageRepositoryImpl(this)
-//        enableEdgeToEdge()
         setContent {
-            SteamDeckTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Grid(Modifier.padding(innerPadding), imageRepository)
-                }
-            }
+            App()
+//            SteamDeckTheme {
+//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+//                    Grid(Modifier.padding(innerPadding), imageRepository)
+//                }
+//            }
+        }
+    }
+}
+
+@Composable
+fun App() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home") { HomeScreen(navController) }
+        composable("detail") { DetailScreen(navController) }
+    }
+}
+
+@Composable
+fun HomeScreen(navController: NavController) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Home Screen")
+        Button(onClick = { navController.navigate("detail") }) {
+            Text("Go to Detail Screen")
+        }
+    }
+}
+
+@Composable
+fun DetailScreen(navController: NavController) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Detail Screen")
+        Button(onClick = { navController.navigateUp() }) {
+            Text("Go Back")
         }
     }
 }
 
 @Composable
 fun Grid(modifier: Modifier, imageRepository: ImageRepository) {
+    //Grid
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = gridSize.dp),
         contentPadding = PaddingValues(8.dp),
@@ -73,8 +118,9 @@ fun Grid(modifier: Modifier, imageRepository: ImageRepository) {
         }
     }
 
-//    val viewModel: ImageViewModel = ImageViewModel(imageRepository)
-//    ImageListScreen(viewModel)
+    //Images
+    val imageViewModel = ImageViewModel(imageRepository)
+    ImageListScreen(imageViewModel)
 }
 
 @Preview(showBackground = true)
@@ -101,8 +147,6 @@ fun PhotoItem(photo: Int) {
 @Composable
 fun ImageListScreen(viewModel: ImageViewModel) {
     val images by viewModel.images.collectAsState()
-
-    // Start loading images when composable is displayed
     LaunchedEffect(Unit) {
         viewModel.loadImages()
     }
