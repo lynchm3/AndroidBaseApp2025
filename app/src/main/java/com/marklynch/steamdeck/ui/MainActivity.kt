@@ -1,4 +1,4 @@
-package com.marklynch.steamdeck
+package com.marklynch.steamdeck.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,21 +12,31 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.marklynch.steamdeck.ui.theme.SteamDeckTheme
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import coil3.compose.rememberAsyncImagePainter
+import com.marklynch.steamdeck.data.image.disk.ImageData
+import com.marklynch.steamdeck.data.image.disk.ImageRepository
+import com.marklynch.steamdeck.data.image.disk.ImageRepositoryImpl
+import com.marklynch.steamdeck.data.image.model.ImageViewModel
 
-var photos:Int = 20
-var gridSize:Int = 128
+val photos:Int = 20
+val gridSize:Int = 128
 val colors: Array<Color> = arrayOf(
     Color(0xFF3D348B),// Dark Blue
     Color(0xFF7678ED),// Light Blue
@@ -38,11 +48,12 @@ val colors: Array<Color> = arrayOf(
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        val imageRepository = ImageRepositoryImpl(this)
+//        enableEdgeToEdge()
         setContent {
             SteamDeckTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Grid(Modifier.padding(innerPadding))
+                    Grid(Modifier.padding(innerPadding), imageRepository)
                 }
             }
         }
@@ -50,7 +61,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Grid(modifier: Modifier) {
+fun Grid(modifier: Modifier, imageRepository: ImageRepository) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = gridSize.dp),
         contentPadding = PaddingValues(8.dp),
@@ -61,13 +72,17 @@ fun Grid(modifier: Modifier) {
             PhotoItem(photo)
         }
     }
+
+//    val viewModel: ImageViewModel = ImageViewModel(imageRepository)
+//    ImageListScreen(viewModel)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     SteamDeckTheme {
-        Grid(Modifier)
+        val context = LocalContext.current
+        Grid(Modifier, ImageRepositoryImpl(context))
     }
 }
 
@@ -77,12 +92,43 @@ fun PhotoItem(photo: Int) {
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-//            .size(gridSize.dp)
-//            .background(Color.Blue)
             .background(
-                color = colors[photo%colors.size],
+                color = colors[photo% colors.size],
                 shape = RoundedCornerShape(16.dp) )
     )
+}
+
+@Composable
+fun ImageListScreen(viewModel: ImageViewModel) {
+    val images by viewModel.images.collectAsState()
+
+    // Start loading images when composable is displayed
+    LaunchedEffect(Unit) {
+        viewModel.loadImages()
+    }
+
+    LazyColumn {
+        items(images) { imageData ->
+            ImageItem(imageData)
+        }
+    }
+}
+
+@Composable
+fun ImageItem(imageData: ImageData) {
+    Row(modifier = Modifier.padding(8.dp)) {
+        // Load image using Coil (or other libraries) from Uri
+        Image(
+            painter = rememberAsyncImagePainter(model = imageData.uri),
+            contentDescription = imageData.name,
+            modifier = Modifier.size(80.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(text = imageData.name)
+            Text(text = "Date Taken: ${imageData.dateTaken}")
+        }
+    }
 }
 
 
