@@ -10,15 +10,13 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StreamDeck"
+        android:theme="@style/Theme.SteamDeck"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:resizeableActivity="true"
-            android:theme="@style/Theme.StreamDeck.NoActionBar"
-            tools:targetApi="24">
+            android:theme="@style/Theme.SteamDeck">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

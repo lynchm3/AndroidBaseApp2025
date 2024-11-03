@@ -1,4 +1,4 @@
-package com.marklynch.streamdeck
+package com.marklynch.steamdeck
 
 import org.junit.Test
 

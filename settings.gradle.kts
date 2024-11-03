@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "StreamDeck"
+rootProject.name = "SteamDeck"
 include(":app")
  
