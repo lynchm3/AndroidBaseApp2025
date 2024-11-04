@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -25,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.rememberAsyncImagePainter
 import com.marklynch.steamdeck.BuildConfig
+import com.marklynch.steamdeck.R
 import com.marklynch.steamdeck.data.image.ImageData
 import com.marklynch.steamdeck.data.image.ImageRepository
 import com.marklynch.steamdeck.data.image.model.ImageViewModel
@@ -34,7 +36,7 @@ import timber.log.Timber.*
 import timber.log.Timber.Forest.plant
 
 
-val gridItems:Int = 20
+//val gridItems:Int = 20
 val gridItemWith:Int = 128
 val colors: Array<Color> = arrayOf(
     Color(0xFF3D348B),// Dark Blue
@@ -44,11 +46,16 @@ val colors: Array<Color> = arrayOf(
     Color(0xFFF35B04), // Dark Orange
 )
 
+val buttons:MutableList<StreamDeckButton> = mutableListOf(StreamDeckButton())
+
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         if (BuildConfig.DEBUG) {
             plant(DebugTree())
         }
+
 //        else {
 //            plant(CrashReportingTree())
 //        }
@@ -66,32 +73,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-//class CrashReportingTree : Tree() {
-//    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-//        if (priority == Log.VERBOSE || priority == Log.DEBUG) {
-//            return
-//        }
-//
-//        FakeCrashLibrary.log(priority, tag, message)
-//
-//        if (t != null) {
-//            if (priority == Log.ERROR) {
-//                FakeCrashLibrary.logError(t)
-//            } else if (priority == Log.WARN) {
-//                FakeCrashLibrary.logWarning(t)
-//            }
-//        }
-//    }
-//}
-
 @Composable
 fun App(imageRepository: ImageRepository) {
     val navController = rememberNavController()
     val imageViewModel = ImageViewModel(imageRepository)
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { HomeScreen(navController, imageRepository) }
-        composable("add") { AddScreen(navController) }
-        composable("images") { ImageListScreen(imageViewModel) }
+        composable("add") { PickInteractionScreen(navController) }
     }
 }
 
@@ -104,8 +92,7 @@ fun Preview() {
     val imageViewModel = ImageViewModel(imageRepository)
     NavHost(navController = navController, startDestination = "home") {
         composable("home") { HomeScreen(navController, ImageDataFromResourcesRepositoryImpl(context)) }
-        composable("add") { AddScreen(navController) }
-        composable("images") { ImageListScreen(imageViewModel) }
+        composable("add") { PickInteractionScreen(navController) }
     }
 }
 
@@ -116,54 +103,38 @@ fun HomeScreen(navController: NavController, imageRepository: ImageRepository) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Button(onClick = { navController.navigate("images") }) {
-            Text("+ Add")
-        }
-        Grid(imageRepository)
+//        Button(onClick = { navController.navigate("images") }) {
+//            Text("+ Add")
+//        }
+        Grid(navController)
     }
 }
 
 @Composable
-fun AddScreen(navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Add Screen")
-    }
-}
-
-@Composable
-fun Grid(imageRepository: ImageRepository) {
-    //Grid
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = gridItemWith.dp),
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(gridItems) { index ->
-            GridItem(index)
-        }
-    }
-
-    //Images
-    val imageViewModel = ImageViewModel(imageRepository)
-    ImageListScreen(imageViewModel)
-}
-
-@Composable
-fun GridItem(photo: Int) {
-    Box(
+fun GridItem(buttonIndex: Int, navController: NavController) {
+    Image(
+        painter = rememberAsyncImagePainter(R.drawable.icon_plus),
+        contentDescription = "",
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
             .background(
-                color = colors[photo % colors.size],
+                color = colors[buttonIndex % colors.size],
                 shape = RoundedCornerShape(16.dp)
-            )
+            ).clickable {
+                navController.navigate("add")
+            }
     )
+//    Box(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .aspectRatio(1f)
+//            .background(
+//                color = colors[buttonIndex % colors.size],
+//                shape = RoundedCornerShape(16.dp)
+//            )
+//    ) {
+//    }
 }
 
 @Composable

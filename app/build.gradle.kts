@@ -41,6 +41,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.retrofit)
+    implementation(libs.okhttp)
     implementation(libs.timber)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
