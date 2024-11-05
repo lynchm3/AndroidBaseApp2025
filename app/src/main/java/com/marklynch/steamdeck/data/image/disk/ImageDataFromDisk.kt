@@ -16,9 +16,7 @@ class ImageDataFromDiskRepositoryImpl(private val context: Context) : ImageRepos
         val images = mutableListOf<ImageData>()
 
         val uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val columns = arrayOf(MediaStore.Images.Media._ID,
-            MediaStore.Images.Media.DISPLAY_NAME,
-            MediaStore.Images.Media.DATE_TAKEN)
+        val columns = arrayOf(MediaStore.Images.Media._ID)
         val orderBy = MediaStore.Images.Media.DATE_TAKEN
 
         context.contentResolver.query(
