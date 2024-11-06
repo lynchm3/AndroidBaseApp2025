@@ -10,18 +10,23 @@ import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -41,6 +46,7 @@ import coil3.request.ImageRequest
 import coil3.size.Size
 import com.marklynch.steamdeck.BuildConfig
 import com.marklynch.steamdeck.R
+import com.marklynch.steamdeck.data.buttons.StreamDeckButtons
 import com.marklynch.steamdeck.data.image.ImageData
 import com.marklynch.steamdeck.data.image.ImageRepository
 import com.marklynch.steamdeck.data.image.model.ImageViewModel
@@ -51,7 +57,7 @@ import timber.log.Timber.Forest.plant
 
 
 //val gridItems:Int = 20
-val gridItemWith:Int = 128
+val gridItemWith: Int = 128
 val colors: Array<Color> = arrayOf(
     Color(0xFF3D348B),// Dark Blue
     Color(0xFF7678ED),// Light Blue
@@ -60,7 +66,14 @@ val colors: Array<Color> = arrayOf(
     Color(0xFFF35B04), // Dark Orange
 )
 
-val buttons:MutableList<StreamDeckButton> = mutableListOf(StreamDeckButton(),StreamDeckButton(),StreamDeckButton(),StreamDeckButton(),StreamDeckButton(),StreamDeckButton())
+val buttons: MutableList<StreamDeckButton> = mutableListOf(
+    StreamDeckButton(),
+    StreamDeckButton(),
+    StreamDeckButton(),
+    StreamDeckButton(),
+    StreamDeckButton(),
+    StreamDeckButton()
+)
 
 class MainActivity : ComponentActivity() {
 
@@ -93,10 +106,12 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         val imageRepository = ImageDataFromResourcesRepositoryImpl(context)
         NavHost(navController = navController, startDestination = "home") {
-            composable("home") { HomeScreen(
-                navController,
-                ImageDataFromResourcesRepositoryImpl(context)
-            ) }
+            composable("home") {
+                HomeScreen(
+                    navController,
+                    ImageDataFromResourcesRepositoryImpl(context)
+                )
+            }
             composable("add") { PickInteractionScreen(navController) }
         }
     }
@@ -107,38 +122,70 @@ class MainActivity : ComponentActivity() {
         imageRepository: ImageRepository
     ) {
         var editMode by remember { mutableStateOf<Boolean>(false) }
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+//        Column(
+//            modifier = Modifier.fillMaxSize(),
+//            verticalArrangement = Arrangement.Center,
+//            horizontalAlignment = Alignment.CenterHorizontally
+//        ) {
+
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
+            Grid(navController, editMode)
             Button(onClick = {
                 editMode = !editMode
-
-            }) {
-                Text(text = "Edit Mode")
+            }, modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp)
+                .size(48.dp),
+                contentPadding = PaddingValues(8.dp)) {
+                if(editMode){
+                    Image(
+                        painter = painterResource(id = R.drawable.icon_check),
+                        contentDescription = "Delete Button",
+                        modifier = Modifier
+                            .padding(0.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.icon_pencil),
+                        contentDescription = "Delete Button",
+                        modifier = Modifier
+                            .padding(0.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
-            Grid(navController, editMode)
         }
     }
 
+    val streamDeckButtons = StreamDeckButtons()
     @Composable
     fun Grid(navController: NavController, editMode: Boolean) {
         //Grid
+        var buttons = remember {streamDeckButtons.buttons}
+
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = gridItemWith.dp),
-            contentPadding = PaddingValues(20.dp,20.dp,20.dp,20.dp),
+            contentPadding = PaddingValues(8.dp, 64.dp, 8.dp, 20.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(buttons.size) { index ->
-                GridItem(index, navController, editMode)
+            itemsIndexed(buttons) { index, button ->
+                GridItem(index, navController, editMode, button, buttons)
             }
         }
     }
 
     @Composable
-    fun GridItem(buttonIndex: Int, navController: NavController, editMode: Boolean) {
+    fun GridItem(
+        buttonIndex: Int,
+        navController: NavController,
+        editMode: Boolean,
+        button: com.marklynch.steamdeck.data.buttons.StreamDeckButton,
+        buttons: SnapshotStateList<com.marklynch.steamdeck.data.buttons.StreamDeckButton>
+    ) {
         val angle by animateFloatAsState(targetValue = if (editMode) 10f else 0f)
         val context = LocalContext.current
         var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -151,43 +198,67 @@ class MainActivity : ComponentActivity() {
             selectedImageUri = uri // Update the selected image URI
         }
 
-        Timber.d("selectedImageUri: $selectedImageUri")
-        Image(
-            painter = rememberAsyncImagePainter(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(selectedImageUri)
-//                    .placeholder(painterResource(R.drawable.icon_plus))
-                    .size(Size.ORIGINAL) // Load original size
-                    .build(),
-                placeholder = painterResource(R.drawable.icon_plus),
-                error = painterResource(R.drawable.icon_plus)
-            ),
-            contentDescription = "",
-            modifier = Modifier.fillMaxWidth()
-                .graphicsLayer(rotationZ = angle)
+        var refresh by remember { mutableStateOf(false) }
+
+        Box(
+            modifier = Modifier
                 .aspectRatio(1f)
-                .background(
-                color = colors[buttonIndex % colors.size],
-
-//                shape = RoundedCornerShape(16.dp)
+                .graphicsLayer(rotationZ = angle)
+        ) { // The size of the parent Box
+            Image(
+                painter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(selectedImageUri)
+                        .size(Size.ORIGINAL) // Load original size
+                        .build(),
+                    placeholder = painterResource(button.iconImage),
+                    error = painterResource(button.iconImage)
+                ),
+                contentDescription = "",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .background(color = colors[buttonIndex % colors.size]),
+//                    .pointerInput(Unit) {
+//                        detectTapGestures { offset ->
+//                            if (editMode) {
+//                                clickOffset = offset
+//                                menuVisible = true
+//                            } else {
+//                                clickOffset = offset
+//                            }
+//                        }
+//                    },
+                contentScale = ContentScale.Crop
             )
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        if(editMode) {
-                            clickOffset = offset
-                            menuVisible = true
-                        } else {
-                            clickOffset = offset
-                        }
-                    }
-                },
-            contentScale = ContentScale.Crop
 
-//                .clickable {
-//
-////                    launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
-//            }
-        )
+            //DELETE ICON
+            Image(
+                painter = painterResource(id = R.drawable.icon_bin),
+                contentDescription = "Delete Button",
+                modifier = Modifier
+                    .size(48.dp)
+                    .align(Alignment.TopEnd)
+                    .alpha(if (editMode) 1f else 0f)
+                    .padding(8.dp)
+                    .clickable {                        buttons.remove(button)
+                    },
+                contentScale = ContentScale.Crop)
+
+            //IMAGE ICON
+            Image(
+                painter = painterResource(id = R.drawable.icon_image),
+                contentDescription = "Edit Image",
+                modifier = Modifier
+                    .size(48.dp)
+                    .align(Alignment.CenterEnd)
+                    .alpha(if (editMode) 1f else 0f)
+                    .padding(8.dp)
+                    .clickable {
+                        menuVisible = true
+                    },
+                contentScale = ContentScale.Crop)
+        }
 
         DropdownMenu(
             expanded = menuVisible,
@@ -197,14 +268,14 @@ class MainActivity : ComponentActivity() {
             DropdownMenuItem(
                 text = { Text("Pick image from icons") },
                 onClick = {
-                menuVisible = false
-            })
+                    menuVisible = false
+                })
             DropdownMenuItem(
                 text = { Text("Pick image from phone") },
                 onClick = {
                     launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                     menuVisible = false
-            })
+                })
         }
     }
 
@@ -230,7 +301,9 @@ class MainActivity : ComponentActivity() {
             Image(
                 painter = rememberAsyncImagePainter(model = imageData.uri),
                 contentDescription = "",
-                modifier = Modifier.size(80.dp).background(backgroundColor)
+                modifier = Modifier
+                    .size(80.dp)
+                    .background(backgroundColor)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column {
