@@ -8,10 +8,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,8 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -46,6 +46,8 @@ import coil3.request.ImageRequest
 import coil3.size.Size
 import com.marklynch.steamdeck.BuildConfig
 import com.marklynch.steamdeck.R
+import com.marklynch.steamdeck.data.buttons.ButtonType
+import com.marklynch.steamdeck.data.buttons.StreamDeckButton
 import com.marklynch.steamdeck.data.buttons.StreamDeckButtons
 import com.marklynch.steamdeck.data.image.ImageData
 import com.marklynch.steamdeck.data.image.ImageRepository
@@ -54,6 +56,9 @@ import com.marklynch.steamdeck.data.image.resources.ImageDataFromResourcesReposi
 import timber.log.Timber
 import timber.log.Timber.*
 import timber.log.Timber.Forest.plant
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
 
 
 //val gridItems:Int = 20
@@ -64,15 +69,6 @@ val colors: Array<Color> = arrayOf(
     Color(0xFFF7B801), // Yellow
     Color(0xFFF18701),  // Light Orange
     Color(0xFFF35B04), // Dark Orange
-)
-
-val buttons: MutableList<StreamDeckButton> = mutableListOf(
-    StreamDeckButton(),
-    StreamDeckButton(),
-    StreamDeckButton(),
-    StreamDeckButton(),
-    StreamDeckButton(),
-    StreamDeckButton()
 )
 
 class MainActivity : ComponentActivity() {
@@ -116,6 +112,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    val streamDeckButtons = StreamDeckButtons()
     @Composable
     fun HomeScreen(
         navController: NavController,
@@ -129,9 +126,29 @@ class MainActivity : ComponentActivity() {
 //        ) {
 
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().background(Color.DarkGray)
         ) {
-            Grid(navController, editMode)
+            var triggerFireworks by remember { mutableStateOf(false) }
+            Grid(navController, editMode, { triggerFireworks = true })
+
+            //Add button
+            Button(onClick = {
+                streamDeckButtons.buttons.add(StreamDeckButton())
+            }, modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(8.dp)
+                .size(48.dp),
+                contentPadding = PaddingValues(8.dp)) {
+                Image(
+                    painter = painterResource(id = R.drawable.icon_plus),
+                    contentDescription = "Delete Button",
+                    modifier = Modifier.padding(0.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+
+
+            //Edit button
             Button(onClick = {
                 editMode = !editMode
             }, modifier = Modifier
@@ -143,8 +160,7 @@ class MainActivity : ComponentActivity() {
                     Image(
                         painter = painterResource(id = R.drawable.icon_check),
                         contentDescription = "Delete Button",
-                        modifier = Modifier
-                            .padding(0.dp),
+                        modifier = Modifier.padding(0.dp),
                         contentScale = ContentScale.Fit
                     )
                 } else {
@@ -157,12 +173,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+
+            //Fireworks
+            Fireworks(triggerFireworks, onAnimationEnd = { triggerFireworks = false })
         }
     }
 
-    val streamDeckButtons = StreamDeckButtons()
     @Composable
-    fun Grid(navController: NavController, editMode: Boolean) {
+    fun Grid(navController: NavController, editMode: Boolean, fireworksTrigger: () -> Unit, ) {
         //Grid
         var buttons = remember {streamDeckButtons.buttons}
 
@@ -173,7 +191,7 @@ class MainActivity : ComponentActivity() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             itemsIndexed(buttons) { index, button ->
-                GridItem(index, navController, editMode, button, buttons)
+                GridItem(index, navController, editMode, button, buttons, fireworksTrigger)
             }
         }
     }
@@ -184,7 +202,8 @@ class MainActivity : ComponentActivity() {
         navController: NavController,
         editMode: Boolean,
         button: com.marklynch.steamdeck.data.buttons.StreamDeckButton,
-        buttons: SnapshotStateList<com.marklynch.steamdeck.data.buttons.StreamDeckButton>
+        buttons: SnapshotStateList<com.marklynch.steamdeck.data.buttons.StreamDeckButton>,
+        fireworksTrigger: () -> Unit
     ) {
         val angle by animateFloatAsState(targetValue = if (editMode) 10f else 0f)
         val context = LocalContext.current
@@ -197,8 +216,6 @@ class MainActivity : ComponentActivity() {
         val launcher = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
             selectedImageUri = uri // Update the selected image URI
         }
-
-        var refresh by remember { mutableStateOf(false) }
 
         Box(
             modifier = Modifier
@@ -218,7 +235,13 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .background(color = colors[buttonIndex % colors.size]),
+                    .background(color = colors[buttonIndex % colors.size])
+                    .clickable {
+                        if(button.buttonType == ButtonType.FIREWORKS){
+                            if(!editMode)
+                                fireworksTrigger()
+                        }
+                    },
 //                    .pointerInput(Unit) {
 //                        detectTapGestures { offset ->
 //                            if (editMode) {
@@ -232,32 +255,41 @@ class MainActivity : ComponentActivity() {
                 contentScale = ContentScale.Crop
             )
 
-            //DELETE ICON
-            Image(
-                painter = painterResource(id = R.drawable.icon_bin),
-                contentDescription = "Delete Button",
-                modifier = Modifier
-                    .size(48.dp)
-                    .align(Alignment.TopEnd)
-                    .alpha(if (editMode) 1f else 0f)
-                    .padding(8.dp)
-                    .clickable {                        buttons.remove(button)
-                    },
-                contentScale = ContentScale.Crop)
+            if(editMode) {
+                //DELETE ICON
+                Box(
+                    modifier = Modifier
+                        .background(Color.Red)
+                        .size(48.dp)
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                        .clickable {buttons.remove(button)},
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.icon_bin),
+                        contentDescription = "Delete Button",
+                        contentScale = ContentScale.Crop
+                    )
+                }
 
-            //IMAGE ICON
-            Image(
-                painter = painterResource(id = R.drawable.icon_image),
-                contentDescription = "Edit Image",
-                modifier = Modifier
-                    .size(48.dp)
-                    .align(Alignment.CenterEnd)
-                    .alpha(if (editMode) 1f else 0f)
-                    .padding(8.dp)
-                    .clickable {
-                        menuVisible = true
-                    },
-                contentScale = ContentScale.Crop)
+                //IMAGE ICON
+                Box(
+                    modifier = Modifier
+                        .background(Color.Blue)
+                        .size(48.dp)
+                        .align(Alignment.CenterEnd)
+                        .padding(8.dp)
+                        .clickable { menuVisible = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.icon_image),
+                        contentDescription = "Edit Image",
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+            }
         }
 
         DropdownMenu(
@@ -276,6 +308,46 @@ class MainActivity : ComponentActivity() {
                     launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                     menuVisible = false
                 })
+        }
+    }
+
+    @Composable
+    fun Fireworks(trigger: Boolean, onAnimationEnd: () -> Unit) {
+        var particles by remember { mutableStateOf(emptyList<Particle>()) }
+
+        // Trigger fireworks when "trigger" becomes true
+        LaunchedEffect(trigger) {
+            if (trigger) {
+                particles = createFireworkParticles()
+
+                val animationDuration = 2000
+                val startTime = withFrameNanos { it }
+
+                while (withFrameNanos { it } - startTime < animationDuration * 1_000_000) {
+                    particles = particles.map { particle ->
+                        particle.copy(
+                            x = particle.x + particle.velocityX,
+                            y = particle.y + particle.velocityY,
+                            alpha = particle.alpha - 0.02f,
+                            scale = particle.scale * 0.98f
+                        )
+                    }.filter { it.alpha > 0 }
+                    withFrameNanos { }
+                }
+
+                onAnimationEnd() // Reset the trigger state after animation
+            }
+        }
+
+        // Draw particles as circles
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            particles.forEach { particle ->
+                drawCircle(
+                    color = particle.color.copy(alpha = particle.alpha),
+                    radius = particle.scale * 5.dp.toPx(),
+                    center = androidx.compose.ui.geometry.Offset(particle.x, particle.y)
+                )
+            }
         }
     }
 
@@ -312,6 +384,45 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+// Data class for particle properties
+data class Particle(
+    var x: Float,
+    var y: Float,
+    val velocityX: Float,
+    val velocityY: Float,
+    val color: Color,
+    val scale: Float,
+    var alpha: Float
+)
+
+// Function to create particles with random properties
+fun createFireworkParticles(): List<Particle> {
+    val particles = mutableListOf<Particle>()
+    val centerX = 400f
+    val centerY = 800f
+    val numParticles = 100
+    for (i in 0 until numParticles) {
+        val angle = Random.nextDouble(0.0, Math.PI * 2).toFloat()
+        val speed = Random.nextFloat() * 8f + 2f
+        particles.add(
+            Particle(
+                x = centerX,
+                y = centerY,
+                velocityX = (cos(angle) * speed),
+                velocityY = (sin(angle) * speed),
+                color = Color(
+                    red = Random.nextFloat(),
+                    green = Random.nextFloat(),
+                    blue = Random.nextFloat()
+                ),
+                scale = Random.nextFloat() * 2f + 1f,
+                alpha = 1f
+            )
+        )
+    }
+    return particles
 }
 
 
