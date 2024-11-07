@@ -47,15 +47,22 @@ import com.marklynch.steamdeck.data.buttons.StreamDeckButtons
 import com.marklynch.steamdeck.data.image.ImageRepository
 import com.marklynch.steamdeck.data.image.model.ImageViewModel
 import com.marklynch.steamdeck.data.image.resources.ImageDataFromResourcesRepositoryImpl
+import com.marklynch.steamdeck.domain.printer.Printer
 import com.marklynch.steamdeck.ui.dialogs.TextEntryDialog
 import com.marklynch.steamdeck.ui.pickers.SelectImageDialog
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import timber.log.Timber.*
 import timber.log.Timber.Forest.plant
+import javax.inject.Inject
 
 val gridItemWith: Int = 128
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+//    @Inject lateinit var analytics: AnalyticsAdapter
+    @Inject lateinit var printer: Printer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (BuildConfig.DEBUG) {
@@ -223,6 +230,7 @@ class MainActivity : ComponentActivity() {
                 if (button.buttonType.value == ButtonType.FIREWORKS) {
                     if (!editMode)
                         fireworksTrigger()
+                        printer.print()
                 }
             },
             modifier = Modifier
