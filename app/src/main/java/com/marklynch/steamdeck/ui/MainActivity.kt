@@ -61,7 +61,6 @@ val gridItemWith: Int = 128
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-//    @Inject lateinit var analytics: AnalyticsAdapter
     @Inject lateinit var printer: Printer
 
     override fun onCreate(savedInstanceState: Bundle?) {
