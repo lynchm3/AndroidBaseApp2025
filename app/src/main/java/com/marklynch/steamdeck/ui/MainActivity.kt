@@ -1,6 +1,5 @@
 package com.marklynch.steamdeck.ui
 
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,12 +11,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,16 +25,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -60,16 +62,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
-
-//val gridItems:Int = 20
 val gridItemWith: Int = 128
-val colors: Array<Color> = arrayOf(
-    Color(0xFF3D348B),// Dark Blue
-    Color(0xFF7678ED),// Light Blue
-    Color(0xFFF7B801), // Yellow
-    Color(0xFFF18701),  // Light Orange
-    Color(0xFFF35B04), // Dark Orange
-)
 
 class MainActivity : ComponentActivity() {
 
@@ -113,32 +106,48 @@ class MainActivity : ComponentActivity() {
     }
 
     val streamDeckButtons = StreamDeckButtons()
+
     @Composable
     fun HomeScreen(
         navController: NavController,
         imageRepository: ImageRepository
     ) {
         var editMode by remember { mutableStateOf<Boolean>(false) }
+        var changeNameMode by remember { mutableStateOf<Boolean>(false) }
 //        Column(
 //            modifier = Modifier.fillMaxSize(),
 //            verticalArrangement = Arrangement.Center,
 //            horizontalAlignment = Alignment.CenterHorizontally
 //        ) {
-
+        val backgroundDrawable: Painter = painterResource(id = R.drawable.background)
         Box(
-            modifier = Modifier.fillMaxSize().background(Color.DarkGray)
+            modifier = Modifier
+                .fillMaxSize(),
+//            backgroundDrawable = backgroundDrawable
+
+
         ) {
+            Image(painter = painterResource(id = R.drawable.background),
+                contentDescription = "Delete Button",
+                modifier = Modifier.padding(0.dp)
+//                    .size(200.dp),
+                    .fillMaxHeight(),
+                contentScale = ContentScale.FillHeight
+                )
+
             var triggerFireworks by remember { mutableStateOf(false) }
-            Grid(navController, editMode, { triggerFireworks = true })
+            Grid(navController, editMode, { triggerFireworks = true }, {changeNameMode = true})
 
             //Add button
-            Button(onClick = {
-                streamDeckButtons.buttons.add(StreamDeckButton())
-            }, modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(8.dp)
-                .size(48.dp),
-                contentPadding = PaddingValues(8.dp)) {
+            Button(
+                onClick = {
+                    streamDeckButtons.buttons.add(StreamDeckButton())
+                }, modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(8.dp)
+                    .size(48.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.icon_plus),
                     contentDescription = "Delete Button",
@@ -147,16 +156,17 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-
             //Edit button
-            Button(onClick = {
-                editMode = !editMode
-            }, modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .size(48.dp),
-                contentPadding = PaddingValues(8.dp)) {
-                if(editMode){
+            Button(
+                onClick = {
+                    editMode = !editMode
+                }, modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .size(48.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                if (editMode) {
                     Image(
                         painter = painterResource(id = R.drawable.icon_check),
                         contentDescription = "Delete Button",
@@ -174,15 +184,29 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            var text = remember { mutableStateOf("Hello, World!") }
+            if(changeNameMode){
+                TextField(
+                    value = text.value,
+                    onValueChange = { newText -> text.value = newText },
+                    label = { Text("Enter text") }
+                )
+            }
+
             //Fireworks
             Fireworks(triggerFireworks, onAnimationEnd = { triggerFireworks = false })
         }
     }
 
     @Composable
-    fun Grid(navController: NavController, editMode: Boolean, fireworksTrigger: () -> Unit, ) {
+    fun Grid(
+        navController: NavController,
+        editMode: Boolean,
+        fireworksTrigger: () -> Unit,
+        changeTextMode: () -> Unit
+    ) {
         //Grid
-        var buttons = remember {streamDeckButtons.buttons}
+        var buttons = remember { streamDeckButtons.buttons }
 
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = gridItemWith.dp),
@@ -190,8 +214,9 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            itemsIndexed(buttons) { index, button ->
-                GridItem(index, navController, editMode, button, buttons, fireworksTrigger)
+            items(buttons.size) { index ->
+                val button = buttons[index]
+                GridItem(index, navController, editMode, button, buttons, fireworksTrigger, changeTextMode)
             }
         }
     }
@@ -201,93 +226,152 @@ class MainActivity : ComponentActivity() {
         buttonIndex: Int,
         navController: NavController,
         editMode: Boolean,
-        button: com.marklynch.steamdeck.data.buttons.StreamDeckButton,
-        buttons: SnapshotStateList<com.marklynch.steamdeck.data.buttons.StreamDeckButton>,
-        fireworksTrigger: () -> Unit
+        button: StreamDeckButton,
+        buttons: SnapshotStateList<StreamDeckButton>,
+        fireworksTrigger: () -> Unit,
+        changeTextMode: () -> Unit
     ) {
+        val painter: Painter =
+            if(button.selectedImageUri.value != null)
+                rememberAsyncImagePainter(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(button.selectedImageUri.value)
+                    .size(Size.ORIGINAL) // Load original size
+                    .build())
+            else
+                painterResource(id = button.iconImage.intValue)
+
+
+
+//            placeholder = painterResource(button.iconImage.intValue),
+//            error = painterResource(button.iconImage.intValue)
+//        )
+
         val angle by animateFloatAsState(targetValue = if (editMode) 10f else 0f)
-        val context = LocalContext.current
-        var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-        // Track if the context menu is open
         var menuVisible by remember { mutableStateOf(false) }
 
         // Track the position of the click
         var clickOffset by remember { mutableStateOf(Offset.Zero) }
         val launcher = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-            selectedImageUri = uri // Update the selected image URI
+//            selectedImageUri = uri // Update the selected image URI
+            button.selectedImageUri.value = uri
         }
 
-        Box(
+        //Streamdeck button
+        Button(
+            onClick = {
+                if (button.buttonType.value == ButtonType.FIREWORKS) {
+                    if (!editMode)
+                        fireworksTrigger()
+                }
+            },
             modifier = Modifier
                 .aspectRatio(1f)
-                .graphicsLayer(rotationZ = angle)
-        ) { // The size of the parent Box
-            Image(
-                painter = rememberAsyncImagePainter(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(selectedImageUri)
-                        .size(Size.ORIGINAL) // Load original size
-                        .build(),
-                    placeholder = painterResource(button.iconImage),
-                    error = painterResource(button.iconImage)
-                ),
-                contentDescription = "",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .background(color = colors[buttonIndex % colors.size])
-                    .clickable {
-                        if(button.buttonType == ButtonType.FIREWORKS){
-                            if(!editMode)
-                                fireworksTrigger()
-                        }
-                    },
-//                    .pointerInput(Unit) {
-//                        detectTapGestures { offset ->
-//                            if (editMode) {
-//                                clickOffset = offset
-//                                menuVisible = true
-//                            } else {
-//                                clickOffset = offset
-//                            }
-//                        }
-//                    },
-                contentScale = ContentScale.Crop
-            )
+                .graphicsLayer(rotationZ = angle),
+            contentPadding = PaddingValues(0.dp),
+            shape = RectangleShape
+        ) {
 
-            if(editMode) {
-                //DELETE ICON
-                Box(
-                    modifier = Modifier
-                        .background(Color.Red)
-                        .size(48.dp)
-                        .align(Alignment.BottomEnd)
-                        .padding(8.dp)
-                        .clickable {buttons.remove(button)},
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.icon_bin),
-                        contentDescription = "Delete Button",
-                        contentScale = ContentScale.Crop
-                    )
-                }
+            Box {
 
-                //IMAGE ICON
-                Box(
+                Image(
+                    painter = painter,
+                    contentDescription = "",
                     modifier = Modifier
-                        .background(Color.Blue)
-                        .size(48.dp)
-                        .align(Alignment.CenterEnd)
+                        .fillMaxWidth()
+                        .background(color = button.color.value)
+                        .padding(if (button.selectedImageUri.value == null) 24.dp else 0.dp),
+                    contentScale = ContentScale.Crop
+                )
+
+                //text outline
+                Text(
+                    text = button.text.value,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
                         .padding(8.dp)
-                        .clickable { menuVisible = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.icon_image),
-                        contentDescription = "Edit Image",
-                        contentScale = ContentScale.Crop,
-                    )
+                        .offset(x = 1.dp, y = 1.dp),
+                    color = Color.Black,
+                    maxLines = 1,
+                    fontSize = TextUnit(4f, TextUnitType.Em),
+                )
+
+                //text
+                Text(
+                    text = button.text.value,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(8.dp),
+                    color = Color.White,
+                    maxLines = 1,
+                    fontSize = TextUnit(4f, TextUnitType.Em),
+                )
+
+                if (editMode) {
+                    //DELETE ICON
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Red)
+                            .size(48.dp)
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .clickable {
+                                buttons.removeAt(buttonIndex)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.icon_bin),
+                            contentDescription = "Delete Button",
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    //TEXT ICON
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Yellow)
+                            .size(48.dp)
+                            .align(Alignment.TopEnd)
+                            .padding(8.dp)
+                            .clickable {
+                                changeTextMode()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.icon_text),
+                            contentDescription = "Change Text Button",
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    //CHANGE IMAGE ICON
+                    Box(
+                        modifier = Modifier
+                            .background(Color.Blue)
+                            .size(48.dp)
+                            .align(Alignment.CenterEnd)
+                            .padding(8.dp)
+                            .pointerInput(Unit) {
+                                detectTapGestures { offset ->
+                                    if (editMode) {
+                                        clickOffset = offset
+                                        menuVisible = true
+                                    } else {
+                                        clickOffset = offset
+                                    }
+                                }
+                            },
+//                        .clickable { menuVisible = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.icon_image),
+                            contentDescription = "Edit Image",
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
                 }
             }
         }
@@ -361,7 +445,7 @@ class MainActivity : ComponentActivity() {
 
         LazyColumn {
             itemsIndexed(images) { index, imageData ->
-                ImageItem(imageData, colors[index % colors.size])
+//                ImageItem(imageData, colors[index % colors.size])
             }
         }
     }
@@ -423,6 +507,11 @@ fun createFireworkParticles(): List<Particle> {
         )
     }
     return particles
+}
+
+@Composable
+fun IconSelectionGrid() {
+
 }
 
 
