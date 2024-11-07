@@ -21,16 +21,14 @@ import androidx.navigation.NavController
 import coil3.compose.rememberAsyncImagePainter
 import com.marklynch.steamdeck.R
 import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import java.io.File
+import com.marklynch.steamdeck.ui.main.gridItemWith
 
 @Composable
 fun PickInteractionScreen(navController: NavController) {

@@ -67,21 +67,22 @@ dependencies {
 
     kapt(libs.hilt.android.compiler)
 
-    // JUnit (for unit tests)
-    testImplementation(libs.junit)  // Replace with the latest version
-
-    // AndroidX Test (for instrumentation/UI tests)
+    // Testing
+    testImplementation(libs.junit)
     androidTestImplementation (libs.androidx.junit)
     androidTestImplementation (libs.androidx.espresso.core)
     androidTestImplementation (libs.androidx.runner)
     androidTestImplementation (libs.androidx.rules)
-
-    // Mockito (for mocking in unit tests)
     testImplementation (libs.mockito.core)
     testImplementation (libs.mockito.inline)
 
     // Mockito for Android (for mocking in Android instrumentation tests)
     androidTestImplementation (libs.mockito.android)
+
+    // Test rules and transitive dependencies:
+    androidTestImplementation(libs.ui.test.junit4)
+// Needed for createComposeRule(), but not for createAndroidComposeRule<YourActivity>():
+    debugImplementation(libs.ui.test.manifest)
 }
 
 kapt {
