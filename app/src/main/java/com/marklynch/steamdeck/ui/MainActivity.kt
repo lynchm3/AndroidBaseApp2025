@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.remember
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -63,6 +65,21 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 val gridItemWith: Int = 128
+
+val drawableResources = listOf(
+    R.drawable.icon_chat,
+    R.drawable.icon_check,
+    R.drawable.icon_confetti,
+    R.drawable.icon_game,
+    R.drawable.icon_image,
+    R.drawable.icon_pause,
+    R.drawable.icon_pencil,
+    R.drawable.icon_play,
+    R.drawable.icon_plus,
+    R.drawable.icon_stop,
+    R.drawable.icon_text
+
+)
 
 class MainActivity : ComponentActivity() {
 
@@ -241,12 +258,6 @@ class MainActivity : ComponentActivity() {
             else
                 painterResource(id = button.iconImage.intValue)
 
-
-
-//            placeholder = painterResource(button.iconImage.intValue),
-//            error = painterResource(button.iconImage.intValue)
-//        )
-
         val angle by animateFloatAsState(targetValue = if (editMode) 10f else 0f)
         var menuVisible by remember { mutableStateOf(false) }
 
@@ -256,6 +267,9 @@ class MainActivity : ComponentActivity() {
 //            selectedImageUri = uri // Update the selected image URI
             button.selectedImageUri.value = uri
         }
+
+        var showDrawablesPicker by remember { mutableStateOf(false) }
+//        var selectedDrawable by remember { mutableStateOf<Int?>(null) }
 
         //Streamdeck button
         Button(
@@ -384,14 +398,27 @@ class MainActivity : ComponentActivity() {
             DropdownMenuItem(
                 text = { Text("Pick image from icons") },
                 onClick = {
+                    showDrawablesPicker = true
                     menuVisible = false
                 })
             DropdownMenuItem(
                 text = { Text("Pick image from phone") },
                 onClick = {
-                    launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+//                    launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                     menuVisible = false
                 })
+        }
+
+        if (showDrawablesPicker) {
+            DrawablePickerDialog(
+                drawableResources = drawableResources,
+                onDismissRequest = { showDrawablesPicker = false },
+                onDrawableSelected = { drawable ->
+                    button.iconImage.intValue = drawable
+                    button.selectedImageUri.value = null
+                    showDrawablesPicker = false
+                }
+            )
         }
     }
 
@@ -510,9 +537,47 @@ fun createFireworkParticles(): List<Particle> {
 }
 
 @Composable
-fun IconSelectionGrid() {
+fun DrawablePickerDialog(
+    drawableResources: List<Int>,
+    onDismissRequest: () -> Unit,
+    onDrawableSelected: (Int) -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.padding(16.dp).background(Color.DarkGray)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp).background(Color.DarkGray)
+            ) {
+                Text(
+                    text = "Select Drawable",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(8.dp),
+                    color = Color.White
+                )
 
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3), // 3 columns for a grid layout
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth().background(Color.DarkGray)
+                ) {
+                    items(drawableResources.size) { index ->
+                        Image(
+                            painter = painterResource(id = drawableResources[index]),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .size(64.dp)
+                                .clickable { onDrawableSelected(drawableResources[index]) }.background(Color.DarkGray)
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
-
 
 
