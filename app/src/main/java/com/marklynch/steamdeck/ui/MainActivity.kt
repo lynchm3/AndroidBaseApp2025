@@ -2,23 +2,16 @@ package com.marklynch.steamdeck.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.remember
@@ -36,11 +29,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -53,33 +44,16 @@ import com.marklynch.steamdeck.R
 import com.marklynch.steamdeck.data.buttons.ButtonType
 import com.marklynch.steamdeck.data.buttons.StreamDeckButton
 import com.marklynch.steamdeck.data.buttons.StreamDeckButtons
-import com.marklynch.steamdeck.data.image.ImageData
 import com.marklynch.steamdeck.data.image.ImageRepository
 import com.marklynch.steamdeck.data.image.model.ImageViewModel
 import com.marklynch.steamdeck.data.image.resources.ImageDataFromResourcesRepositoryImpl
+import com.marklynch.steamdeck.ui.dialogs.TextEntryDialog
+import com.marklynch.steamdeck.ui.pickers.SelectImageDialog
 import timber.log.Timber
 import timber.log.Timber.*
 import timber.log.Timber.Forest.plant
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.random.Random
 
 val gridItemWith: Int = 128
-
-val drawableResources = listOf(
-    R.drawable.icon_chat,
-    R.drawable.icon_check,
-    R.drawable.icon_confetti,
-    R.drawable.icon_game,
-    R.drawable.icon_image,
-    R.drawable.icon_pause,
-    R.drawable.icon_pencil,
-    R.drawable.icon_play,
-    R.drawable.icon_plus,
-    R.drawable.icon_stop,
-    R.drawable.icon_text
-
-)
 
 class MainActivity : ComponentActivity() {
 
@@ -130,30 +104,18 @@ class MainActivity : ComponentActivity() {
         imageRepository: ImageRepository
     ) {
         var editMode by remember { mutableStateOf<Boolean>(false) }
-        var changeNameMode by remember { mutableStateOf<Boolean>(false) }
-//        Column(
-//            modifier = Modifier.fillMaxSize(),
-//            verticalArrangement = Arrangement.Center,
-//            horizontalAlignment = Alignment.CenterHorizontally
-//        ) {
-        val backgroundDrawable: Painter = painterResource(id = R.drawable.background)
         Box(
-            modifier = Modifier
-                .fillMaxSize(),
-//            backgroundDrawable = backgroundDrawable
-
-
+            modifier = Modifier.fillMaxSize()
         ) {
             Image(painter = painterResource(id = R.drawable.background),
                 contentDescription = "Delete Button",
                 modifier = Modifier.padding(0.dp)
-//                    .size(200.dp),
                     .fillMaxHeight(),
                 contentScale = ContentScale.FillHeight
                 )
 
             var triggerFireworks by remember { mutableStateOf(false) }
-            Grid(navController, editMode, { triggerFireworks = true }, {changeNameMode = true})
+            Grid(navController, editMode, { triggerFireworks = true })
 
             //Add button
             Button(
@@ -201,15 +163,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            var text = remember { mutableStateOf("Hello, World!") }
-            if(changeNameMode){
-                TextField(
-                    value = text.value,
-                    onValueChange = { newText -> text.value = newText },
-                    label = { Text("Enter text") }
-                )
-            }
-
             //Fireworks
             Fireworks(triggerFireworks, onAnimationEnd = { triggerFireworks = false })
         }
@@ -219,8 +172,7 @@ class MainActivity : ComponentActivity() {
     fun Grid(
         navController: NavController,
         editMode: Boolean,
-        fireworksTrigger: () -> Unit,
-        changeTextMode: () -> Unit
+        fireworksTrigger: () -> Unit
     ) {
         //Grid
         var buttons = remember { streamDeckButtons.buttons }
@@ -233,7 +185,7 @@ class MainActivity : ComponentActivity() {
         ) {
             items(buttons.size) { index ->
                 val button = buttons[index]
-                GridItem(index, navController, editMode, button, buttons, fireworksTrigger, changeTextMode)
+                GridItem(index, navController, editMode, button, buttons, fireworksTrigger)
             }
         }
     }
@@ -245,8 +197,7 @@ class MainActivity : ComponentActivity() {
         editMode: Boolean,
         button: StreamDeckButton,
         buttons: SnapshotStateList<StreamDeckButton>,
-        fireworksTrigger: () -> Unit,
-        changeTextMode: () -> Unit
+        fireworksTrigger: () -> Unit
     ) {
         val painter: Painter =
             if(button.selectedImageUri.value != null)
@@ -259,17 +210,12 @@ class MainActivity : ComponentActivity() {
                 painterResource(id = button.iconImage.intValue)
 
         val angle by animateFloatAsState(targetValue = if (editMode) 10f else 0f)
-        var menuVisible by remember { mutableStateOf(false) }
 
         // Track the position of the click
         var clickOffset by remember { mutableStateOf(Offset.Zero) }
-        val launcher = rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-//            selectedImageUri = uri // Update the selected image URI
-            button.selectedImageUri.value = uri
-        }
-
-        var showDrawablesPicker by remember { mutableStateOf(false) }
-//        var selectedDrawable by remember { mutableStateOf<Int?>(null) }
+        var showSelectImageDialog by remember { mutableStateOf(false) }
+        var changeTextMode by remember { mutableStateOf<Boolean>(false) }
+        var text by remember { button.text }
 
         //Streamdeck button
         Button(
@@ -322,7 +268,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 if (editMode) {
-                    //DELETE ICON
+                    //Delete button
                     Box(
                         modifier = Modifier
                             .background(Color.Red)
@@ -341,7 +287,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    //TEXT ICON
+                    //Change text button
                     Box(
                         modifier = Modifier
                             .background(Color.Yellow)
@@ -349,7 +295,7 @@ class MainActivity : ComponentActivity() {
                             .align(Alignment.TopEnd)
                             .padding(8.dp)
                             .clickable {
-                                changeTextMode()
+                                changeTextMode = true
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -360,7 +306,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    //CHANGE IMAGE ICON
+                    //Change image button
                     Box(
                         modifier = Modifier
                             .background(Color.Blue)
@@ -371,7 +317,7 @@ class MainActivity : ComponentActivity() {
                                 detectTapGestures { offset ->
                                     if (editMode) {
                                         clickOffset = offset
-                                        menuVisible = true
+                                        showSelectImageDialog = true
                                     } else {
                                         clickOffset = offset
                                     }
@@ -390,194 +336,26 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        DropdownMenu(
-            expanded = menuVisible,
-            onDismissRequest = { menuVisible = false },
-            offset = DpOffset(clickOffset.x.dp, clickOffset.y.dp)
-        ) {
-            DropdownMenuItem(
-                text = { Text("Pick image from icons") },
-                onClick = {
-                    showDrawablesPicker = true
-                    menuVisible = false
-                })
-            DropdownMenuItem(
-                text = { Text("Pick image from phone") },
-                onClick = {
-//                    launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
-                    menuVisible = false
-                })
+        //Change name dialog
+        if(changeTextMode){
+            TextEntryDialog(
+                onDismissRequest = {changeTextMode = false},
+                startText = text,
+                onValueChange = { newText -> text = newText })
         }
 
-        if (showDrawablesPicker) {
-            DrawablePickerDialog(
-                drawableResources = drawableResources,
-                onDismissRequest = { showDrawablesPicker = false },
+        //Select image dialog
+        if(showSelectImageDialog)
+            SelectImageDialog(
+                onDismissRequest = { showSelectImageDialog = false },
                 onDrawableSelected = { drawable ->
                     button.iconImage.intValue = drawable
                     button.selectedImageUri.value = null
-                    showDrawablesPicker = false
+                },
+                onImageSelected = { uri ->
+                    button.selectedImageUri.value = uri
                 }
             )
-        }
-    }
-
-    @Composable
-    fun Fireworks(trigger: Boolean, onAnimationEnd: () -> Unit) {
-        var particles by remember { mutableStateOf(emptyList<Particle>()) }
-
-        // Trigger fireworks when "trigger" becomes true
-        LaunchedEffect(trigger) {
-            if (trigger) {
-                particles = createFireworkParticles()
-
-                val animationDuration = 2000
-                val startTime = withFrameNanos { it }
-
-                while (withFrameNanos { it } - startTime < animationDuration * 1_000_000) {
-                    particles = particles.map { particle ->
-                        particle.copy(
-                            x = particle.x + particle.velocityX,
-                            y = particle.y + particle.velocityY,
-                            alpha = particle.alpha - 0.02f,
-                            scale = particle.scale * 0.98f
-                        )
-                    }.filter { it.alpha > 0 }
-                    withFrameNanos { }
-                }
-
-                onAnimationEnd() // Reset the trigger state after animation
-            }
-        }
-
-        // Draw particles as circles
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            particles.forEach { particle ->
-                drawCircle(
-                    color = particle.color.copy(alpha = particle.alpha),
-                    radius = particle.scale * 5.dp.toPx(),
-                    center = androidx.compose.ui.geometry.Offset(particle.x, particle.y)
-                )
-            }
-        }
-    }
-
-    @Composable
-    fun ImageListScreen(viewModel: ImageViewModel) {
-        Timber.d("ImageListScreen")
-        val images by viewModel.images.collectAsState()
-        LaunchedEffect(Unit) {
-            viewModel.loadImages()
-        }
-
-        LazyColumn {
-            itemsIndexed(images) { index, imageData ->
-//                ImageItem(imageData, colors[index % colors.size])
-            }
-        }
-    }
-
-    @Composable
-    fun ImageItem(imageData: ImageData, backgroundColor: Color) {
-        Row(modifier = Modifier.padding(8.dp)) {
-            // Load image using Coil (or other libraries) from Uri
-            Image(
-                painter = rememberAsyncImagePainter(model = imageData.uri),
-                contentDescription = "",
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(backgroundColor)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(text = "IMAGE NAME")
-                Text(text = "IMAGE DATE")
-            }
-        }
     }
 }
-
-// Data class for particle properties
-data class Particle(
-    var x: Float,
-    var y: Float,
-    val velocityX: Float,
-    val velocityY: Float,
-    val color: Color,
-    val scale: Float,
-    var alpha: Float
-)
-
-// Function to create particles with random properties
-fun createFireworkParticles(): List<Particle> {
-    val particles = mutableListOf<Particle>()
-    val centerX = 400f
-    val centerY = 800f
-    val numParticles = 100
-    for (i in 0 until numParticles) {
-        val angle = Random.nextDouble(0.0, Math.PI * 2).toFloat()
-        val speed = Random.nextFloat() * 8f + 2f
-        particles.add(
-            Particle(
-                x = centerX,
-                y = centerY,
-                velocityX = (cos(angle) * speed),
-                velocityY = (sin(angle) * speed),
-                color = Color(
-                    red = Random.nextFloat(),
-                    green = Random.nextFloat(),
-                    blue = Random.nextFloat()
-                ),
-                scale = Random.nextFloat() * 2f + 1f,
-                alpha = 1f
-            )
-        )
-    }
-    return particles
-}
-
-@Composable
-fun DrawablePickerDialog(
-    drawableResources: List<Int>,
-    onDismissRequest: () -> Unit,
-    onDrawableSelected: (Int) -> Unit
-) {
-    Dialog(onDismissRequest = onDismissRequest) {
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.padding(16.dp).background(Color.DarkGray)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp).background(Color.DarkGray)
-            ) {
-                Text(
-                    text = "Select Drawable",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(8.dp),
-                    color = Color.White
-                )
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3), // 3 columns for a grid layout
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth().background(Color.DarkGray)
-                ) {
-                    items(drawableResources.size) { index ->
-                        Image(
-                            painter = painterResource(id = drawableResources[index]),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .size(64.dp)
-                                .clickable { onDrawableSelected(drawableResources[index]) }.background(Color.DarkGray)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
 
