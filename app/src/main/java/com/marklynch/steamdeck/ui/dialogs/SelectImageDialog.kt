@@ -1,8 +1,7 @@
-package com.marklynch.steamdeck.ui.pickers
+package com.marklynch.steamdeck.ui.dialogs
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.marklynch.steamdeck.ui.pickers.IconPickerDialog
 
 @Composable
 fun SelectImageDialog(
@@ -61,7 +61,7 @@ fun SelectImageDialog(
                     modifier = Modifier
                         .padding(8.dp)
                         .clickable {
-                            launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
+//                            launcher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
                         },
                     color = Color.White
                 )

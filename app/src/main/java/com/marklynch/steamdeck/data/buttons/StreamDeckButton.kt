@@ -1,11 +1,12 @@
 package com.marklynch.steamdeck.data.buttons
 import android.net.Uri
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.marklynch.steamdeck.R
 
 val colors: Array<Color> = arrayOf(
@@ -42,10 +43,12 @@ enum class ButtonType {
     FIREWORKS
 }
 
-class StreamDeckButton {
-    var iconImage = mutableIntStateOf(icons.random())
-    var buttonType = mutableStateOf<ButtonType>(ButtonType.FIREWORKS)
-    var selectedImageUri =  mutableStateOf<Uri?>(null)
-    var color = mutableStateOf<Color>(colors.random())
-    var text = mutableStateOf<String>(texts.random())
-}
+@Entity(tableName = "buttons")
+data class StreamDeckButton (
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    var iconImage: MutableIntState,
+    var buttonType: MutableState<ButtonType>,
+    var selectedImageUri: MutableState<Uri?>,
+    var color: MutableState<Color>,
+    var text: MutableState<String>
+)

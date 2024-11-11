@@ -43,6 +43,23 @@ android {
 }
 
 dependencies {
+
+
+    implementation("androidx.room:room-runtime:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
+
+    // To use Kotlin annotation processing tool (kapt)
+    kapt("androidx.room:room-compiler:2.6.1")
+
+    // optional - Kotlin Extensions and Coroutines support for Room
+    implementation("androidx.room:room-ktx:2.6.1")
+
+    // optional - RxJava3 support for Room
+    implementation("androidx.room:room-rxjava3:2.6.1")
+
+    // optional - Test helpers
+    testImplementation("androidx.room:room-testing:2.6.1")
+
     implementation(libs.retrofit)
     implementation(libs.okhttp)
     implementation(libs.timber)
