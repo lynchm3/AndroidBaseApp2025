@@ -12,3 +12,4 @@ Base app app to be used as starting point to quickly kickstart projects
 - UI Tests - Espresso
 - Mocking - Mockito
 - Logging - Timber
+- Database - Room
