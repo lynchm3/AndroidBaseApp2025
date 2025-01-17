@@ -4,8 +4,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.rules.ActivityScenarioRule
-import com.marklynch.steamdeck.ui.main.MainActivity
-import com.marklynch.steamdeck.ui.main.MainScreen
+import com.marklynch.steamdeck.ui.activity.grid.MainActivity
+import com.marklynch.steamdeck.ui.activity.grid.MainScreen
 import org.junit.Rule
 import org.junit.Test
 

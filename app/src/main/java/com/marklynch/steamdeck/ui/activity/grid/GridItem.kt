@@ -1,31 +1,21 @@
-package com.marklynch.steamdeck.ui.main
+package com.marklynch.steamdeck.ui.activity.grid
 
-import android.net.Uri
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,149 +37,16 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.room.PrimaryKey
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.size.Size
 import com.marklynch.steamdeck.R
 import com.marklynch.steamdeck.data.buttons.ButtonType
 import com.marklynch.steamdeck.data.buttons.StreamDeckButton
-import com.marklynch.steamdeck.data.buttons.colors
-import com.marklynch.steamdeck.data.buttons.icons
-import com.marklynch.steamdeck.data.buttons.texts
-import com.marklynch.steamdeck.data.image.model.ImageViewModel
-import com.marklynch.steamdeck.ui.Fireworks
-import com.marklynch.steamdeck.ui.PickInteractionScreen
-import com.marklynch.steamdeck.ui.dialogs.TextEntryDialog
 import com.marklynch.steamdeck.ui.dialogs.SelectImageDialog
+import com.marklynch.steamdeck.ui.dialogs.TextEntryDialog
 import timber.log.Timber
 
-@Composable
-fun MainScreen(mainViewModel: MainViewModel) {
-    val navController = rememberNavController()
-    val imageViewModel = ImageViewModel()
-    NavHost(navController = navController, startDestination = "home") {
-        composable("home") { HomeScreen(navController, mainViewModel) }
-        composable("add") { PickInteractionScreen(navController) }
-    }
-}
-
-@Composable
-fun HomeScreen(
-    navController: NavController,
-    mainViewModel: MainViewModel
-) {
-
-    var editMode by remember { mutableStateOf<Boolean>(false) }
-
-    if(editMode){
-        BackHandler {
-            editMode = false
-        }
-    }
-
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color.DarkGray)
-    ) {
-        //Background image
-//        Image(painter = painterResource(id = R.drawable.background),
-//            contentDescription = "Delete Button",
-//            modifier = Modifier.padding(0.dp)
-//                .fillMaxHeight(),
-//            contentScale = ContentScale.FillHeight
-//        )
-
-        var triggerFireworks by remember { mutableStateOf(false) }
-        Grid(navController, editMode, { triggerFireworks = true }, mainViewModel)
-
-        //Add button
-        Button(
-            onClick = {
-                mainViewModel.insert(StreamDeckButton(0,
-                    iconImage = mutableIntStateOf(icons.random()),
-                    buttonType = mutableStateOf<ButtonType>(ButtonType.FIREWORKS),
-                    selectedImageUri = mutableStateOf<Uri?>(null),
-                    color = mutableStateOf<Color>(colors.random()),
-                    text = mutableStateOf<String>(texts.random())
-                ))
-//                streamDeckButtons.buttons.add(StreamDeckButton())
-            }, modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(8.dp)
-                .size(48.dp),
-            contentPadding = PaddingValues(8.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.icon_plus),
-                contentDescription = "Add Button",
-                modifier = Modifier.padding(0.dp),
-                contentScale = ContentScale.Fit
-            )
-        }
-
-        //Edit button
-        Button(
-            onClick = {
-                editMode = !editMode
-            }, modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .size(48.dp)
-                .semantics { contentDescription = "editMode" },
-            contentPadding = PaddingValues(8.dp)
-        ) {
-            Text(text = "Edit")
-
-            if (editMode) {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_check),
-                    contentDescription = "Delete Button",
-                    modifier = Modifier.padding(0.dp),
-                    contentScale = ContentScale.Fit
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_pencil),
-                    contentDescription = "Edit Button",
-                    modifier = Modifier
-                        .padding(0.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
-        }
-
-        //Fireworks
-        Fireworks(triggerFireworks, onAnimationEnd = { triggerFireworks = false })
-    }
-}
-
-@Composable
-fun Grid(
-    navController: NavController,
-    editMode: Boolean,
-    fireworksTrigger: () -> Unit,
-    mainViewModel: MainViewModel
-) {
-    //Grid
-    var buttons = mainViewModel.buttonsList
-
-    Timber.d("Grid()")
-
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = gridItemWith.dp),
-        contentPadding = PaddingValues(8.dp, 64.dp, 8.dp, 20.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(buttons.size) { index ->
-            val button = buttons[index]
-            GridItem(index, navController, editMode, button, buttons, fireworksTrigger, mainViewModel)
-        }
-    }
-}
 
 @Composable
 fun GridItem(
@@ -199,10 +56,19 @@ fun GridItem(
     button: StreamDeckButton,
     buttons: SnapshotStateList<StreamDeckButton>,
     fireworksTrigger: () -> Unit,
-    mainViewModel: MainViewModel
+    gridViewModel: GridViewModel
 ) {
 
-    Timber.d("GridItem()")
+    Timber.d("GridItem() - button.selectedImageUri.value = %s", button.selectedImageUri.value)
+    if(button.selectedImageUri.toString() == "null"){
+        Timber.d("GridItem() - button.selectedImageUri.value is the string null")
+    } else if(button.selectedImageUri.value == null){
+        Timber.d("GridItem() - button.selectedImageUri.value is actually null")
+    }
+
+    Timber.d("GridItem() - button.iconImage.intValue = %s", button.iconImage.intValue)
+    Timber.d("GridItem() - R.drawable.icon_check= %s", R.drawable.icon_check)
+
     val painter: Painter =
         if(button.selectedImageUri.value != null)
             rememberAsyncImagePainter(
@@ -282,9 +148,7 @@ fun GridItem(
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
                         .clickable {
-                            mainViewModel.delete(button)
-//                            buttons.removeAt(buttonIndex)
-                            
+                            gridViewModel.delete(button)
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -347,9 +211,14 @@ fun GridItem(
     //Change name dialog
     if(changeTextMode){
         TextEntryDialog(
-            onDismissRequest = {changeTextMode = false},
+            onDismissRequest = {
+                changeTextMode = false
+                gridViewModel.insert(button)
+            },
             startText = text,
-            onValueChange = { newText -> text = newText })
+            onValueChange = {
+                    newText -> text = newText
+            })
     }
 
     //Select image dialog
@@ -359,9 +228,11 @@ fun GridItem(
             onDrawableSelected = { drawable ->
                 button.iconImage.intValue = drawable
                 button.selectedImageUri.value = null
+                gridViewModel.insert(button)
             },
             onImageSelected = { uri ->
                 button.selectedImageUri.value = uri
+                gridViewModel.insert(button)
             }
         )
 

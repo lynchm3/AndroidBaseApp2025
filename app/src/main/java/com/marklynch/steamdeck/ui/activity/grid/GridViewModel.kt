@@ -1,19 +1,14 @@
-package com.marklynch.steamdeck.ui.main
+package com.marklynch.steamdeck.ui.activity.grid
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.marklynch.steamdeck.data.buttons.ButtonsRepository
 import com.marklynch.steamdeck.data.buttons.StreamDeckButton
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
-class MainViewModel @Inject constructor(
+class GridViewModel @Inject constructor(
     private val buttonsRepository: ButtonsRepository
 ) : ViewModel() {
     // MutableState to hold the list of buttons
@@ -25,11 +20,19 @@ class MainViewModel @Inject constructor(
     }
 
     // Function to load all buttons
+    val lock = Any()
     private fun select() {
         viewModelScope.launch {
+            //change atomically so it only reloads once?
+
+
+//            atmo
+//            buttonsList.set(buttonsRepository.getAll())
+            var newList = buttonsRepository.getAll()
             buttonsList.clear()
-            buttonsList.addAll(buttonsRepository.getAll())
-            Timber.d("Buttons loaded: ${buttonsList.size}")
+            buttonsList.addAll(newList)
+
+//            Timber.d("Buttons loaded: ${buttonsList.size}")
         }
     }
 

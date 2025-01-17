@@ -18,16 +18,23 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SteamDeck"
         tools:targetApi="31">
+
         <activity
-            android:name=".ui.main.MainActivity"
+            android:name=".ui.activity.main.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.SteamDeck">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.activity.grid.GridActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SteamDeck">
+        </activity>
+
     </application>
 
 </manifest>

@@ -1,4 +1,4 @@
-package com.marklynch.steamdeck.ui.main
+package com.marklynch.steamdeck.ui.activity.main
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,8 +12,6 @@ import timber.log.Timber.Forest.plant
 import javax.inject.Inject
 
 val gridItemWith: Int = 128
-
-
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

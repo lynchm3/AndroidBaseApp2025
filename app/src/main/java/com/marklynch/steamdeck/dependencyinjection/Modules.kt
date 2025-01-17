@@ -7,8 +7,6 @@ import com.marklynch.steamdeck.AppDatabase
 import com.marklynch.steamdeck.data.buttons.ButtonsDao
 import com.marklynch.steamdeck.domain.printer.ConsolePrinter
 import com.marklynch.steamdeck.domain.printer.Printer
-import com.marklynch.steamdeck.ui.main.MainActivity
-import com.marklynch.steamdeck.ui.main.MainViewModel
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

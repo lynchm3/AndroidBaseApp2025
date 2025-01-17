@@ -10,8 +10,6 @@ class ButtonsRepository @Inject constructor(
         val buttons = buttonsDao.getAll()
         Timber.d("Buttons: $buttons")
         return buttons
-
-//        return buttonsDao.getAll()
     }
 
     suspend fun insert(button: StreamDeckButton) {

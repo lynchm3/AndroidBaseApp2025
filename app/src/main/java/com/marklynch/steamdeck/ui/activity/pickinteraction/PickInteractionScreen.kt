@@ -1,4 +1,4 @@
-package com.marklynch.steamdeck.ui
+package com.marklynch.steamdeck.ui.activity.pickinteraction
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,7 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import com.marklynch.steamdeck.ui.main.gridItemWith
+import com.marklynch.steamdeck.ui.activity.main.gridItemWith
+
 
 @Composable
 fun PickInteractionScreen(navController: NavController) {

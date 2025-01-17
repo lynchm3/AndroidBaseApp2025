@@ -10,11 +10,11 @@ import androidx.room.Query
 interface ButtonsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(user: StreamDeckButton)
+    suspend fun insert(button: StreamDeckButton)
 
     @Query("SELECT * FROM buttons")
     suspend fun getAll(): List<StreamDeckButton>
 
     @Delete
-    suspend fun delete(user: StreamDeckButton)
+    suspend fun delete(button: StreamDeckButton)
 }

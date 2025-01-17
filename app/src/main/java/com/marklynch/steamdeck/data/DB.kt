@@ -7,13 +7,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.room.Database
-import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
-import androidx.room.TypeConverters
 import com.marklynch.steamdeck.data.buttons.ButtonType
-import com.marklynch.steamdeck.data.buttons.ButtonsDao
-import com.marklynch.steamdeck.data.buttons.StreamDeckButton
 
 class MutableStateConverter {
 
@@ -39,11 +34,15 @@ class MutableStateConverter {
 
     @TypeConverter
     fun fromMutableStateUri(value: MutableState<Uri?>): String {
+        if (value.value == null)
+            return ""
         return value.value.toString()
     }
 
     @TypeConverter
     fun toMutableStateUri(value: String): MutableState<Uri?> {
+        if(value == "")
+            return mutableStateOf(null)
         return mutableStateOf(Uri.parse(value))
     }
 
