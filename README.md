@@ -1,7 +1,7 @@
 # Android Base App
 Base app app to be used as starting point to quickly kickstart projects
 
-# Libraries
+## Libraries
 - UI - Compose
 - Dependency Injection - Hilt
 - API Interface - Retrofit 2
