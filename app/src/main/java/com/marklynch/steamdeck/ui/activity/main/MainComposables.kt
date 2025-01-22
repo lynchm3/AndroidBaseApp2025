@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,24 +56,47 @@ fun HomeScreen(
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize().background(Color.DarkGray)
-    ) {
-        Button(
-            onClick = {
-                mainViewModel?.insert(StreamDeckButton(0,
-                    iconImage = mutableIntStateOf(icons.random()),
-                    buttonType = mutableStateOf<ButtonType>(ButtonType.FIREWORKS),
-                    selectedImageUri = mutableStateOf<Uri?>(null),
-                    color = mutableStateOf<Color>(colors.random()),
-                    text = mutableStateOf<String>(texts.random())
-                ))
-            }, modifier = Modifier.fillMaxWidth()
-                .align(Alignment.TopCenter)
-                .padding(8.dp),
-            contentPadding = PaddingValues(8.dp)
-        ) {
-            Text(text = "Grid")
+    LazyColumn {
+        item {
+            Button(
+                onClick = {
+                    mainViewModel?.insert(
+                        StreamDeckButton(
+                            0,
+                            iconImage = mutableIntStateOf(icons.random()),
+                            buttonType = mutableStateOf<ButtonType>(ButtonType.FIREWORKS),
+                            selectedImageUri = mutableStateOf<Uri?>(null),
+                            color = mutableStateOf<Color>(colors.random()),
+                            text = mutableStateOf<String>(texts.random())
+                        )
+                    )
+                }, modifier = Modifier.fillMaxWidth()
+                    .padding(8.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                Text(text = "Grid")
+            }
+        }
+
+        item {
+            Button(
+                onClick = {
+                    mainViewModel?.insert(
+                        StreamDeckButton(
+                            0,
+                            iconImage = mutableIntStateOf(icons.random()),
+                            buttonType = mutableStateOf<ButtonType>(ButtonType.FIREWORKS),
+                            selectedImageUri = mutableStateOf<Uri?>(null),
+                            color = mutableStateOf<Color>(colors.random()),
+                            text = mutableStateOf<String>(texts.random())
+                        )
+                    )
+                }, modifier = Modifier.fillMaxWidth()
+                    .padding(8.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                Text(text = "List")
+            }
         }
     }
 }
