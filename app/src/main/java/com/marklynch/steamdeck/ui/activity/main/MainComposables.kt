@@ -98,6 +98,27 @@ fun HomeScreen(
                 Text(text = "List")
             }
         }
+
+        item {
+            Button(
+                onClick = {
+                    mainViewModel?.insert(
+                        StreamDeckButton(
+                            0,
+                            iconImage = mutableIntStateOf(icons.random()),
+                            buttonType = mutableStateOf<ButtonType>(ButtonType.FIREWORKS),
+                            selectedImageUri = mutableStateOf<Uri?>(null),
+                            color = mutableStateOf<Color>(colors.random()),
+                            text = mutableStateOf<String>(texts.random())
+                        )
+                    )
+                }, modifier = Modifier.fillMaxWidth()
+                    .padding(8.dp),
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                Text(text = "Dialog")
+            }
+        }
     }
 }
 
